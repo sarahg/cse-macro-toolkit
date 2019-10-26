@@ -1,5 +1,6 @@
 {
     "require": {
-        "kktsvetkov/krumo": "^0.4.1"
+        "kktsvetkov/krumo": "^0.4.1",
+        "google/apiclient": "^2.0"
     }
 }
