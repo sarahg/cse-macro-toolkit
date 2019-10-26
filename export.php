@@ -1,8 +1,8 @@
 <?php
 
-if (php_sapi_name() != 'cli') {
+/*if (php_sapi_name() != 'cli') {
   throw new Exception('This application must be run on the command line.');
-}
+}*/
 
 // All the errors!
 // @todo does this matter for CLI?
@@ -16,9 +16,13 @@ require __DIR__ . '/vendor/autoload.php';
 // @todo maybe it'd be better to build this as a Class
 // this would run on __init()
 $macro_master_list = build_macro_object();
+$quick_replies = quick_replies_to_goog_sheet($macro_master_list);
+
+//krumo($quick_replies);
+
 // @todo store the master list in MySQL (or somewhere) for the ZD import
 
-quick_replies_to_google_docs($macro_master_list);
+//quick_replies_to_google_docs($macro_master_list);
 
 
 /**
@@ -31,12 +35,10 @@ quick_replies_to_google_docs($macro_master_list);
  */
 function fetch_desk_data($endpoint)
 {
-  // @todo I suppose we could use Guzzle for this
-  
   // Retrieve API credentials from secrets.json
-  $config = file_get_contents('secrets.json');
-  $config = json_decode($config, true);
-
+  $config = json_decode(file_get_contents('secrets.json'), true);
+  
+  // Call the Desk API.
   $curl = curl_init();
   curl_setopt_array($curl, array(
     CURLOPT_URL => $config['desk_url'] . $endpoint,
@@ -73,11 +75,13 @@ function fetch_desk_data($endpoint)
 /**
  * Retrieve all macros.
  * 
- * @return array
+ * @return array $content
+ *   Enabled macros with their actions.
  */
 function build_macro_object()
 {
   // Retrieve a JSON object of Desk macros.
+  // @todo pull 100 at once?
   $macros = fetch_desk_data('/api/v2/macros');
 
   // @todo Loop through pages
@@ -91,10 +95,12 @@ function build_macro_object()
       $content[$id] = [
         'title' => $macro['name'],
         'actions' => get_macro_actions($id),
-        'folders' => array_values($macro['folders'])
+        'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
       ];
     }
   }
+
+  return $content;
 }
 
 /**
@@ -121,24 +127,25 @@ function get_macro_actions($id)
 }
 
 /**
- * Get macro Quick Reply text.
- * We're editing this in a Google Sheet, so pull this separately.
- * @todo export straight to Google?
- * 
- * @param int $id
- *   The Desk macro ID.
- * @return string $reply_text
- *   Text for the Quick Reply.
- */
-function get_macro_quick_reply_text($id)
-{ 
-
-}
-
-/**
  * Push Quick Reply text content to a Google Spreadsheet.
  */
-function quick_replies_to_google_docs()
+function quick_replies_to_goog_sheet($macros)
 {
+  $quick_replies = '';
 
+  // Pull the ID, name and text for quick replies.
+  foreach ($macros as $id => $macro) {
+    krumo($macro);
+    if ($macro['actions'][$id]['type'] == "set-case-quick-reply") {
+      $quick_replies[] = [
+        'id' => $id,
+        'name' => $macro['name'],
+        'text' => $macro['actions'][$id]['value']
+      ];
+    }
+  }
+
+  // @todo push to Google Sheet
+
+  return $quick_replies;
 }
