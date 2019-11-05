@@ -16,7 +16,7 @@ require __DIR__ . '/vendor/autoload.php';
 // @todo maybe it'd be better to build this as a Class
 // this would run on __init()
 $macro_master_list = build_macro_object();
-$quick_replies = quick_replies_to_goog_sheet($macro_master_list);
+$quick_replies = quick_replies_to_json($macro_master_list);
 
 //krumo($quick_replies);
 
@@ -127,11 +127,11 @@ function get_macro_actions($id)
 }
 
 /**
- * Push Quick Reply text content to a Google Spreadsheet.
+ * Return Quick Replies in a JSON object.
  */
-function quick_replies_to_goog_sheet($macros)
+function quick_replies_to_json($macros)
 {
-  $quick_replies = '';
+  $quick_replies = [];
 
   // Pull the ID, name and text for quick replies.
   foreach ($macros as $id => $macro) {
@@ -139,13 +139,11 @@ function quick_replies_to_goog_sheet($macros)
     if ($macro['actions'][$id]['type'] == "set-case-quick-reply") {
       $quick_replies[] = [
         'id' => $id,
-        'name' => $macro['name'],
+        'name' => $macro['title'],
         'text' => $macro['actions'][$id]['value']
       ];
     }
   }
 
-  // @todo push to Google Sheet
-
-  return $quick_replies;
+  return json_encode($quick_replies);
 }
