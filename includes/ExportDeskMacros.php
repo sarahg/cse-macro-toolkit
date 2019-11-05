@@ -1,9 +1,11 @@
 <?php
 
-class ExportMacros
+use DeskMacrosToZendesk\DeskApi;
+
+class ExportDeskMacros
 {
 
-  public function __init()
+  public function __construct()
   {
     // Retrieve API credentials from secrets.json
     // @todo Use PHP dotenv package
@@ -15,22 +17,19 @@ class ExportMacros
     $endpoint = '/api/v2/macros';
     $data = new DeskApi($endpoint, $config);
     
-    return macro_object($data);
+    return build_macro_object($data);
   }
 
   /**
    * Parse macros and pull the data we want to migrate.
    * 
+   * @param array $data
+   *   Array of JSON-formatted Macros.
    * @return array $content
-   *   Enabled macros with their actions.
+   *   Enabled macros with relevant fields.
    */
   public function build_macro_object($data)
   {
-
-    // @todo Loop through pages
-    // $total_macros = $macros['total_entries'];
-    // $pages = $total_macros/100;
-
     $content = [];
     foreach ($data['_embedded']['entries'] as $macro) {
       if ($macro['enabled'] == TRUE) {
@@ -43,6 +42,7 @@ class ExportMacros
       }
     }
 
+    // @todo write to JSON files instead
     return $content;
   }
 
@@ -54,9 +54,11 @@ class ExportMacros
    * @return array $actions
    *   Action types and values for the macro.
    */
-  public function get_macro_actions($id)
+  private function get_macro_actions($id)
   {
-    $macro = fetch_desk_data('/api/v2/macros/' . $id . '/actions');
+    $endpoint = '/api/v2/macros/' . $id . '/actions';
+    $macro = new DeskApi($endpoint);
+
     $actions = [];
     foreach ($macro['_embedded']['entries'] as $action) {
       if ($action['enabled'] == TRUE) {

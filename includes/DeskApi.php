@@ -17,6 +17,9 @@ class DeskApi {
   // @todo pull 100 at once
   // @todo pull all batches and concatenate
 
+  // $total_macros = $macros['total_entries'];
+  // $pages = $total_macros/100;
+
   public function __init($endpoint, $config)
   {
 

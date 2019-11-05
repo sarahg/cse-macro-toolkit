@@ -1,13 +1,28 @@
 <?php
 
+use DeskMacrosToZendesk\DeskApi;
+//use DeskMacrosToZendesk\Google;
+
 /**
  * Return Quick Replies in a JSON object.
  */
-class Replies
+class ExportQuickReplies
 {
 
-  // @todo pass in macros object
+  function __construct()
+  {
+    // @todo  retrieve macros from ExportDeskMacros.php JSON files
+    $macros = [];
+    $quick_replies = quick_replies_to_json($macros);
+  }
 
+  /**
+   * Retrieve Quick Reply text from the main Macros object.
+   * @param array $macros
+   *   Array of built-out macro objects, including Actions.
+   * @return array
+   *   JSON object of Quick Replies, keyed by titles.
+   */
   function quick_replies_to_json($macros)
   {
     $quick_replies = [];
