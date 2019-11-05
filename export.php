@@ -1,18 +1,5 @@
 <?php
 
-/*if (php_sapi_name() != 'cli') {
-  throw new Exception('This application must be run on the command line.');
-}*/
-
-// All the errors!
-// @todo does this matter for CLI?
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Load Composer packages.
-require __DIR__ . '/vendor/autoload.php';
-
 // @todo maybe it'd be better to build this as a Class
 // this would run on __init()
 $macro_master_list = build_macro_object();
