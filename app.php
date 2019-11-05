@@ -22,7 +22,7 @@ switch ($arg) {
   case 'macros':
     $macros = new ExportDeskMacros();
     break;
-  case 'quick-replies':
+  case 'quickreplies':
     $replies = new ExportQuickReplies();
     break;
 }
