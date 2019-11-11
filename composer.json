@@ -1,8 +1,13 @@
 {
-    "require": {
-        "google/apiclient": "^2.0"
-    },
-    "require-dev": {
-        "kktsvetkov/krumo": "^0.4.1"
+  "autoload": {
+    "psr-4": {
+      "DeskMacrosToZendesk\\": "src/"
     }
+  },
+  "require": {
+    "google/apiclient": "^2.0"
+  },
+  "require-dev": {
+    "kktsvetkov/krumo": "^0.4.1"
+  }
 }
