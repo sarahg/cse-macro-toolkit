@@ -13,21 +13,18 @@ namespace DeskMacrosToZendesk;
 class DeskApi
 {
 
-  public function __construct($endpoint, $config)
+  public function __construct($endpoint)
   {
+
+    // Retrieve API credentials from secrets.json
+    // @todo Use PHP dotenv package
+    $this->config = json_decode(file_get_contents('secrets.json'), true);
+
     $this->endpoint = $endpoint;
-    $this->config = $config;
   }
 
   public function GetDeskJson()
   {
-
-    // @todo pull 100 at once
-    // @todo pull all batches and concatenate
-
-    // $total_macros = $macros['total_entries'];
-    // $pages = $total_macros/100;
-
     // Call the Desk API.
     $curl = curl_init();
     curl_setopt_array($curl, array(

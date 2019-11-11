@@ -1,52 +1,78 @@
 <?php
 
 namespace DeskMacrosToZendesk;
-
 use DeskMacrosToZendesk\DeskApi;
+
+define('DESK_API_BATCH_SIZE', 100);
 
 class ExportDeskMacros
 {
 
   public function __construct()
   {
-    // Retrieve API credentials from secrets.json
-    // @todo Use PHP dotenv package
-    $config = json_decode(file_get_contents('secrets.json'), true);
+    // All the macros!
+    $macros = $this->fetchAllMacros();
+    echo 'Pulled ' . count($macros) . ' Macros from the Desk API.';
 
-    // Make an API call to Desk and retrieve Macros.
-    // Macro objects include top-level data and Actions;
-    // Actions, if they exist, will include up to 24 action values.
+    // Retrieve Actions for enabled macros.
+    $macros_parsed = $this->build_macro_object($macros);
+    krumo($macros_parsed);
+    
+  }
+
+  /**
+   * Retrieve all our enabled macros from the Desk API.
+   */
+  public function fetchAllMacros()
+  {
+    $data = [];
     $endpoint = '/api/v2/macros';
-    $api = new DeskApi($endpoint, $config);
-    $json = $api->GetDeskJson();
+    $api = new DeskApi($endpoint);
+    $meta = $api->GetDeskJson();
 
-    krumo($json);
-    //var_dump($this->build_macro_object($data));
+    $per_page = DESK_API_BATCH_SIZE;
+    $total = $meta['total_entries'];
+    $total_pages = ceil($total / $per_page);
+
+    $batch_id = 1;
+    while ($batch_id <= $total_pages) {
+      $endpoint = '/api/v2/macros?page=' . $batch_id . '&per_page=' . $per_page;
+
+      $api = new DeskApi($endpoint);
+      $json = $api->GetDeskJson();
+
+      if (!empty($json['_embedded']['entries'])) {
+        foreach ($json['_embedded']['entries'] as $macro) {
+          if ($macro['enabled'] == TRUE) {
+            array_push($data, $macro);
+          }
+        }
+      }
+
+      $batch_id++;
+    }
+    return $data;
   }
 
   /**
    * Parse macros and pull the data we want to migrate.
    * 
    * @param array $data
-   *   Array of JSON-formatted Macros.
+   *   Array of Macros.
    * @return array $content
    *   Enabled macros with relevant fields.
    */
   public function build_macro_object($data)
   {
     $content = [];
-    foreach ($data['_embedded']['entries'] as $macro) {
-      if ($macro['enabled'] == TRUE) {
-        $id = $macro['id'];
-        $content[$id] = [
-          'title' => $macro['name'],
-          'actions' => $this->get_macro_actions($id),
-          'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
-        ];
-      }
+    foreach ($data as $macro) {
+      $id = $macro['id'];
+      $content[$id] = [
+        'title' => $macro['name'],
+        'actions' => $this->get_macro_actions($id),
+        'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
+      ];
     }
-
-    // @todo write to JSON files instead
     return $content;
   }
 
@@ -58,15 +84,16 @@ class ExportDeskMacros
    * @return array $actions
    *   Action types and values for the macro.
    */
-  private function get_macro_actions($id)
+  public function get_macro_actions($id)
   {
     $endpoint = '/api/v2/macros/' . $id . '/actions';
-    $macro = new DeskApi($endpoint);
+    $api = new DeskApi($endpoint);
+    $macro = $api->GetDeskJson();
 
     $actions = [];
     foreach ($macro['_embedded']['entries'] as $action) {
       if ($action['enabled'] == TRUE) {
-        $actions[$id] = [
+        $actions[] = [
           'type' => $action['type'],
           'value' => $action['value']
         ];
@@ -74,5 +101,4 @@ class ExportDeskMacros
     }
     return $actions;
   }
-
 }
