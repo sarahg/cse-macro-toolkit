@@ -1,5 +1,7 @@
 <?php
 
+namespace DeskMacrosToZendesk;
+
 /**
  * Fetch data from the Desk API with cURL.
  * 
@@ -8,25 +10,28 @@
  *   See https://dev.desk.com/API/using-the-api/
  * @return array
  */
-class DeskApi {
+class DeskApi
+{
 
-  // @todo pass this in
-  public $endpoint;
-  private $config;
-
-  // @todo pull 100 at once
-  // @todo pull all batches and concatenate
-
-  // $total_macros = $macros['total_entries'];
-  // $pages = $total_macros/100;
-
-  public function __init($endpoint, $config)
+  public function __construct($endpoint, $config)
   {
+    $this->endpoint = $endpoint;
+    $this->config = $config;
+  }
+
+  public function GetDeskJson()
+  {
+
+    // @todo pull 100 at once
+    // @todo pull all batches and concatenate
+
+    // $total_macros = $macros['total_entries'];
+    // $pages = $total_macros/100;
 
     // Call the Desk API.
     $curl = curl_init();
     curl_setopt_array($curl, array(
-      CURLOPT_URL => $config['desk_url'] . $endpoint,
+      CURLOPT_URL => $this->config['desk_url'] . $this->endpoint,
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_ENCODING => '',
       CURLOPT_MAXREDIRS => 10,
@@ -36,11 +41,11 @@ class DeskApi {
       CURLOPT_HTTPHEADER => [
         'Accept: application/json',
         'Accept-Encoding: gzip, deflate',
-        'Authorization: Basic ' . base64_encode($config['username'] . ':' . $config['password']),
+        'Authorization: Basic ' . base64_encode($this->config['desk_username'] . ':' . $this->config['desk_password']),
         'Cache-Control: no-cache',
         'Connection: keep-alive',
         'Content-Type: application/json',
-        'Host: ' . str_replace('https://', '', $config['desk_url']),
+        'Host: ' . str_replace('https://', '', $this->config['desk_url']),
         //'Postman-Token: ',
         //'User-Agent: PostmanRuntime/7.18.0'
       ],
@@ -54,7 +59,7 @@ class DeskApi {
       throw new Exception('cURL Error #: ' . $err);
     }
 
-    return json_decode($response, true);
+    $data = json_decode($response, true);
+    return $data;
   }
-
 }

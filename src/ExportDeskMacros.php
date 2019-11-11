@@ -1,5 +1,7 @@
 <?php
 
+namespace DeskMacrosToZendesk;
+
 use DeskMacrosToZendesk\DeskApi;
 
 class ExportDeskMacros
@@ -15,9 +17,11 @@ class ExportDeskMacros
     // Macro objects include top-level data and Actions;
     // Actions, if they exist, will include up to 24 action values.
     $endpoint = '/api/v2/macros';
-    $data = new DeskApi($endpoint, $config);
-    
-    return build_macro_object($data);
+    $api = new DeskApi($endpoint, $config);
+    $json = $api->GetDeskJson();
+
+    krumo($json);
+    //var_dump($this->build_macro_object($data));
   }
 
   /**
@@ -36,7 +40,7 @@ class ExportDeskMacros
         $id = $macro['id'];
         $content[$id] = [
           'title' => $macro['name'],
-          'actions' => get_macro_actions($id),
+          'actions' => $this->get_macro_actions($id),
           'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
         ];
       }
