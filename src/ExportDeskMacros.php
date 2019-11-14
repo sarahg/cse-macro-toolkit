@@ -77,7 +77,6 @@ class ExportDeskMacros
       $content[$id] = [
         'title' => $macro['name'],
         'actions' => $this->fetchMacroActions($id),
-        'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
       ];
     }
     return $content;

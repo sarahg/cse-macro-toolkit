@@ -1,12 +1,15 @@
 # Desk Macros to Zendesk
 
 ## Usage
-1. Create a `.env` file in the project root with your Desk credentials:
+1. Create a `.env` file in the project root with your Desk and Zendesk credentials:
 
 ```
 DESK_USERNAME="you@example.com"
 DESK_PASSWORD="yourdeskpassword"
 DESK_URL="https://your-url.desk.com"
+ZENDESK_EMAIL="you@example.com"
+ZENDESK_PASSWORD="yourzendeskpassword"
+ZENDESK_SUBDOMAIN="your-url"
 ```
 
 Note that your Desk user account must have the "API User" role.

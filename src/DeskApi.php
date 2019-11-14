@@ -2,8 +2,6 @@
 
 namespace DeskMacrosToZendesk;
 
-use Dotenv\Dotenv;
-
 /**
  * Fetch data from the Desk API with cURL.
  * 
@@ -17,10 +15,6 @@ class DeskApi
 
   public function __construct($endpoint)
   {
-    // Retrieve API credentials from our .env file.
-    $dotenv = Dotenv::create(dirname(__DIR__, 1));
-    $dotenv->load();
-
     // Desk API endpoint to query.
     $this->endpoint = $endpoint;
   }
