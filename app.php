@@ -16,11 +16,19 @@ error_reporting(E_ALL);
 require __DIR__ . '/vendor/autoload.php';
 
 // Load our desired class based on the argument.
-switch ($argv[1]) {
-  case 'desk-export':
-    $macros = new ExportDeskMacros();
-  break;
-  case 'zendesk-import':
-    $macros = new ImportZendeskMacros();
-  break;
+$error = 'Invalid command. Please see https://github.com/sarahg/export_desk_macros#commands';
+if (isset($argv[1])) {
+  switch ($argv[1]) {
+    case 'desk-export':
+      $macros = new ExportDeskMacros();
+    break;
+    case 'zendesk-import':
+      $macros = new ImportZendeskMacros();
+    break;
+    default:
+      echo $error;
+  }
+}
+else {
+  echo $error;
 }

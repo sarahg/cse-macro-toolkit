@@ -1,29 +1,21 @@
 # Desk Macros to Zendesk
-This is a work in progress, not ready for production usage yet.
 
 ## Usage
-1. Copy `secrets.example.json` to `secrets.json`, and fill in your Desk API and Google Sheets credentials.
-2. Run the application over the CLI: `php app.php` with the `--action` parameter.
+1. Create a `.env` file in the project root with your Desk credentials:
+
+```
+DESK_USERNAME="you@example.com"
+DESK_PASSWORD="yourdeskpassword"
+DESK_URL="https://your-url.desk.com"
+```
+
+Note that your Desk user account must have the "API User" role.
+
+2. Run the application over the CLI: `php app.php <command>`.
 
 ## Commands
-1. `php app.php --action=macros` will pull all Macros from Desk and save this data as a JSON file in the
-`exports` directory within the app.
+1. `php app.php desk-export` will pull all Macros from Desk and save Quick Reply and Note content in a CSV file. We'll import this CSV into Google Sheets for team editing before importing these to Zendesk.
 
-Macros include:
-- Title
-- Description
-- Folder(s)
-- Action(s)
+2. `php app.php custom-actions` returns a report of actions which are *not* Quick Replies or Case Notes. These will need to be replicated in Zendesk manually (there just aren't enough to merit scripting this part). (@TODO)
 
-Actions include:
-- Action type
-- Title
-- Value
-
-2. `php app.php --action=quickreplies` will pull macros as described above, then from those JSON files, export Quick Reply contents to a Google Spreadsheet. We're using this to allow our entire team to contribute content edits before we migrate these macros into Zendesk.
-
-3. `php app.php --action=zendesk` will create a build of exported macros and merge in new content from the Google Sheet created in step 2, then import this data to Zendesk.
-
-## Full migration process
-1. `php app.php --action=macros`
-2. `php app.php --action=zendesk`
+3. `php app.php zendesk-import` import a given CSV file as Zendesk macros. (@TODO)
