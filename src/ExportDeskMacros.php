@@ -1,6 +1,7 @@
 <?php
 
 namespace DeskMacrosToZendesk;
+
 use DeskMacrosToZendesk\DeskApi;
 
 define('DESK_API_BATCH_SIZE', 100);
@@ -15,9 +16,10 @@ class ExportDeskMacros
     echo 'Pulled ' . count($macros) . ' Macros from the Desk API.';
 
     // Retrieve Actions for enabled macros.
-    $macros_parsed = $this->build_macro_object($macros);
-    krumo($macros_parsed);
-    
+    $macros_actions = $this->build_macro_object($macros);
+
+    // Export Quick Replies to CSV.
+    $this->export_quick_replies($macros_actions);
   }
 
   /**
@@ -30,13 +32,11 @@ class ExportDeskMacros
     $api = new DeskApi($endpoint);
     $meta = $api->GetDeskJson();
 
-    $per_page = DESK_API_BATCH_SIZE;
-    $total = $meta['total_entries'];
-    $total_pages = ceil($total / $per_page);
+    $total_pages = ceil($meta['total_entries'] / DESK_API_BATCH_SIZE);
 
     $batch_id = 1;
     while ($batch_id <= $total_pages) {
-      $endpoint = '/api/v2/macros?page=' . $batch_id . '&per_page=' . $per_page;
+      $endpoint = '/api/v2/macros?page=' . $batch_id . '&per_page=' . DESK_API_BATCH_SIZE;
 
       $api = new DeskApi($endpoint);
       $json = $api->GetDeskJson();
@@ -100,5 +100,36 @@ class ExportDeskMacros
       }
     }
     return $actions;
+  }
+
+  /**
+   * Export Quick Replies to CSV.
+   */
+  public function export_quick_replies($macros_actions)
+  {
+    // Prep CSV file.
+    $filename = 'quick-replies-' . time() . '.csv';
+    $fp = fopen($filename, 'w');
+
+    // Loop through our macros and pick out all the Quick Replies.
+    // Export these to our CSV file.
+    $count = 0;
+    foreach ($macros_actions as $id => $row) {
+      if (!empty($row['actions'])) {
+        foreach ($row['actions'] as $action) {
+          if ($action['type'] == 'set-case-note') {
+            $quickReply = [$id, $row['title'], $action['value']];
+            fputcsv($fp, $quickReply);
+            $count++;
+          }
+        }
+      }
+    }
+
+    fclose($fp);
+
+    if ($count >= 1) {
+      echo 'Exported ' . $count . ' Quick Replies to file: ' . $filename;
+    }
   }
 }
