@@ -3,26 +3,24 @@
 namespace DeskMacrosToZendesk;
 
 use DeskMacrosToZendesk\ExportDeskMacros;
-use DeskMacrosToZendesk\ExportQuickReplies;
 
- /*if (php_sapi_name() != 'cli') {
+if (php_sapi_name() != 'cli') {
   throw new Exception('This application must be run on the command line.');
-}*/
+}
 
 // All the errors!
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Load Composer packages.
 require __DIR__ . '/vendor/autoload.php';
 
-$arg = 'macros'; // @todo pass through command-line input
-switch ($arg) {
-  case 'macros':
+// Load our desired class based on the argument.
+switch ($argv[1]) {
+  case 'desk-export':
     $macros = new ExportDeskMacros();
-    break;
-  case 'quickreplies':
-    $replies = new ExportQuickReplies();
-    break;
+  break;
+  case 'zendesk-import':
+    $macros = new ImportZendeskMacros();
+  break;
 }
