@@ -116,6 +116,7 @@ class ExportDeskMacros
     // Prep CSV file.
     $filename = 'exports/quick-replies-' . time() . '.csv';
     $fp = fopen($filename, 'w');
+    fputcsv($fp, ['ID', 'Type', 'Title', 'Text']); // Header row.
 
     // Loop through our macros and pick out all the Quick Replies/Notes.
     // Export these to our CSV file.
