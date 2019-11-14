@@ -11,35 +11,40 @@ class ExportDeskMacros
 
   public function __construct()
   {
-    // All the macros!
+    // Retrieve Macros from Desk.
+    echo 'Fetching macros via the Desk API...';
     $macros = $this->fetchAllMacros();
-    echo 'Pulled ' . count($macros) . ' Macros from the Desk API.';
 
-    // Retrieve Actions for enabled macros.
-    $macros_actions = $this->build_macro_object($macros);
+    // Build an array of all Macros with their Action data.
+    echo "\nFetching macro actions via the Desk API...";
+    $macros_actions = $this->buildMacroActions($macros);
 
-    // Export Quick Replies to CSV.
-    $this->export_quick_replies($macros_actions);
+    // Export Quick Replies, a type of Action, to CSV.
+    // These contain text we need to edit before migrating.
+    echo "\nExporting macros and actions to CSV...";
+    $this->exportQuickReplies($macros_actions);
   }
 
   /**
    * Retrieve all our enabled macros from the Desk API.
+   * 
+   * @return array $data
+   *   All enabled Desk macros, keyed by macro ID.
    */
   public function fetchAllMacros()
   {
     $data = [];
-    $endpoint = '/api/v2/macros';
-    $api = new DeskApi($endpoint);
-    $meta = $api->GetDeskJson();
 
+    // Query the API to determine how many batches we need to run.
+    $api = new DeskApi('/api/v2/macros');
+    $meta = $api->getDeskData();
     $total_pages = ceil($meta['total_entries'] / DESK_API_BATCH_SIZE);
 
+    // Make API calls in batches to retrieve Macro data.
     $batch_id = 1;
     while ($batch_id <= $total_pages) {
-      $endpoint = '/api/v2/macros?page=' . $batch_id . '&per_page=' . DESK_API_BATCH_SIZE;
-
-      $api = new DeskApi($endpoint);
-      $json = $api->GetDeskJson();
+      $api = new DeskApi('/api/v2/macros?page=' . $batch_id . '&per_page=' . DESK_API_BATCH_SIZE);
+      $json = $api->getDeskData();
 
       if (!empty($json['_embedded']['entries'])) {
         foreach ($json['_embedded']['entries'] as $macro) {
@@ -51,25 +56,27 @@ class ExportDeskMacros
 
       $batch_id++;
     }
+
+    echo "\nPulled " . count($data) . " Macros from Desk.";
     return $data;
   }
 
   /**
-   * Parse macros and pull the data we want to migrate.
+   * Retrieve actions for each enabled macro.
    * 
    * @param array $data
-   *   Array of Macros.
+   *   Array of macros.
    * @return array $content
-   *   Enabled macros with relevant fields.
+   *   Enabled macro actions.
    */
-  public function build_macro_object($data)
+  public function buildMacroActions($data)
   {
     $content = [];
     foreach ($data as $macro) {
       $id = $macro['id'];
       $content[$id] = [
         'title' => $macro['name'],
-        'actions' => $this->get_macro_actions($id),
+        'actions' => $this->fetchMacroActions($id),
         'folders' => array_values($macro['folders']) // @todo is this useful in ZD?
       ];
     }
@@ -77,18 +84,17 @@ class ExportDeskMacros
   }
 
   /**
-   * Get macro actions.
+   * Get Macro Actions.
    * 
    * @param int $id
-   *   The Desk macro ID.
+   *   The Desk Macro ID.
    * @return array $actions
-   *   Action types and values for the macro.
+   *   The Macro's Actions with their types and values.
    */
-  public function get_macro_actions($id)
+  public function fetchMacroActions($id)
   {
-    $endpoint = '/api/v2/macros/' . $id . '/actions';
-    $api = new DeskApi($endpoint);
-    $macro = $api->GetDeskJson();
+    $api = new DeskApi('/api/v2/macros/' . $id . '/actions');
+    $macro = $api->getDeskData();
 
     $actions = [];
     foreach ($macro['_embedded']['entries'] as $action) {
@@ -105,20 +111,20 @@ class ExportDeskMacros
   /**
    * Export Quick Replies to CSV.
    */
-  public function export_quick_replies($macros_actions)
+  public function exportQuickReplies($macros_actions)
   {
     // Prep CSV file.
-    $filename = 'quick-replies-' . time() . '.csv';
+    $filename = 'exports/quick-replies-' . time() . '.csv';
     $fp = fopen($filename, 'w');
 
-    // Loop through our macros and pick out all the Quick Replies.
+    // Loop through our macros and pick out all the Quick Replies/Notes.
     // Export these to our CSV file.
     $count = 0;
     foreach ($macros_actions as $id => $row) {
       if (!empty($row['actions'])) {
         foreach ($row['actions'] as $action) {
-          if ($action['type'] == 'set-case-note') {
-            $quickReply = [$id, $row['title'], $action['value']];
+          if (in_array($action['type'], ['set-case-quick-reply', 'set-case-note'])) {
+            $quickReply = [$id, $action['type'], $row['title'], $action['value']];
             fputcsv($fp, $quickReply);
             $count++;
           }
@@ -127,9 +133,6 @@ class ExportDeskMacros
     }
 
     fclose($fp);
-
-    if ($count >= 1) {
-      echo 'Exported ' . $count . ' Quick Replies to file: ' . $filename;
-    }
+    echo "\nExported " . $count . " Quick Replies to file: " . $filename;
   }
 }
