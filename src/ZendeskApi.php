@@ -2,8 +2,6 @@
 
 namespace DeskMacrosToZendesk;
 
-use Dotenv\Dotenv;
-
 /**
  * Fetch data from the Zendesk API with cURL.
  * 
