@@ -67,35 +67,4 @@ class ImportZendeskMacros
     return $result;
   }
 
-  /**
-   * Turn the CSV into an associative array.
-   * https://www.oodlestechnologies.com/blogs/Converting-CSV-file-into-an-Array-in-PHP/
-   * 
-   * @return array
-   */
-  public function readCSV()
-  {
-    $row = 0;
-    $col = 0;
-    $handle = @fopen($this->filename, "r");
-    if ($handle) {
-      while (($row = fgetcsv($handle, 4096)) !== false) {
-        if (empty($fields)) {
-          $fields = $row;
-          continue;
-        }
-
-        foreach ($row as $k => $value) {
-          $results[$col][$fields[$k]] = $value;
-        }
-        $col++;
-        unset($row);
-      }
-      if (!feof($handle)) {
-        echo "Error: unexpected fgets() fail";
-      }
-      fclose($handle);
-    }
-    return $results;
-  }
 }
