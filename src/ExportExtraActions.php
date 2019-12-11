@@ -41,7 +41,10 @@ class ExportExtraActions extends ExportDeskMacros
       
       if (!empty($row['actions'])) {
         foreach ($row['actions'] as $action) {
-          $exports[$id]['actions'][] = [$action['type'], $action['value']];
+          $exports[$id]['actions'][] = [
+            'type' => $action['type'], 
+            'values' => $action['value']
+          ];
           $count++;
         }
       }
