@@ -6,9 +6,9 @@ use Dotenv\Dotenv;
 use DeskMacrosToZendesk\ExportDeskMacros;
 use DeskMacrosToZendesk\ImportZendeskMacros;
 
-if (php_sapi_name() != 'cli') {
+/*if (php_sapi_name() != 'cli') {
   throw new Exception('This application must be run on the command line.');
-}
+}*/
 
 // All the errors!
 ini_set('display_errors', 1);
@@ -20,15 +20,23 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv::create(__DIR__);
 $dotenv->load();
 
-// Load our desired class based on the argument.
+// Load our desired class based on the argument passed via CLI.
 $error = 'Invalid command. Please see https://github.com/sarahg/export_desk_macros#commands';
 if (isset($argv[1])) {
   switch ($argv[1]) {
     case 'desk-export':
       $macros = new ExportDeskMacros();
     break;
+    case 'extra-actions':
+      $macros = new ExportExtraActions();
+    break;
     case 'zendesk-import':
-      $macros = new ImportZendeskMacros();
+      if (isset($arg[2])) {
+        $macros = new ImportZendeskMacros($file);
+      }
+      else {
+        echo 'Please specify a JSON file.';
+      }
     break;
     default:
       echo $error;
