@@ -28,10 +28,12 @@ class ExportDeskMacros
   /**
    * Retrieve all our enabled macros from the Desk API.
    * 
+   * @param array $skip_ids
+   *   Optional. List of macro IDs to skip.
    * @return array $data
    *   All enabled Desk macros, keyed by macro ID.
    */
-  public function fetchAllMacros()
+  public function fetchAllMacros($skip_ids = [])
   {
     $data = [];
 
@@ -48,7 +50,7 @@ class ExportDeskMacros
 
       if (!empty($json['_embedded']['entries'])) {
         foreach ($json['_embedded']['entries'] as $macro) {
-          if ($macro['enabled'] == TRUE) {
+          if ($macro['enabled'] == TRUE && !in_array($macro['id'], $skip_ids)) {
             array_push($data, $macro);
           }
         }
