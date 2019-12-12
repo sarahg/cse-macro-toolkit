@@ -3,7 +3,7 @@
 namespace DeskMacrosToZendesk;
 
 use DeskMacrosToZendesk\ZendeskApi;
-use stdClass;
+use StdClass; // not necessary but VS Code made me do it
 
 class ImportZendeskMacros
 {
@@ -12,15 +12,14 @@ class ImportZendeskMacros
   {
     $this->filename = $filename;
 
-    // Format for ZD import
-    $macros = $this->collectMacros($this->filename);
-    echo "Collecting and formatting macros for import...";
+    // Retrieve all macros and merge in our text updates.
+    $macros = $this->mergeMacros($this->filename);
+    echo "Fetching and updating macros for import...";
 
-    // Update text with edits from CSE @todo
-    // $edited = $this->editMacros($macros);
-    // echo "\nUpdating text...";
+    // Format objects for ZD.
+    // echo "\nFormatting macros..."
 
-    // Import to ZD via ZD API @todo
+    // Post to ZD.
     // echo "\nPosting macros to Zendesk..."
   }
 
@@ -30,23 +29,62 @@ class ImportZendeskMacros
    * @return array
    *   Array of JSON objects, ready to import in ZD.
    */
-  public function collectMacros(string $file)
+  public function mergeMacros(string $file)
   {
-    // Retrieve JSON file.
-    $string = file_get_contents($file);
-    $data = json_decode($string);
 
-    // Post to ZD with cURL.
-    $count = 0;
-    $converted = [];
-    foreach ($data as $macro) {
-      $converted[] = $this->convertMacro($macro);
+    // Get JSON of edited replies (which we pulled from our Google Sheet via gsjson),
+    // and wrangle it a little to make the next step easier.
+    $string_edited = file_get_contents('exports/replies-edited.json');
+    $edited_replies = json_decode($string_edited);
+    $edits = [];
+    foreach ($edited_replies as $reply) {
+      $edits[$reply->id] = $reply->text;
     }
-    return "\nConverted " . $count . " macros for Zendesk";
+
+    // Retrieve JSON of all original (non-deprecated) macros + actions
+    $string_orig = file_get_contents($file);
+    $data_orig = json_decode($string_orig);
+    
+    // Merge edited replies into our main array of macros.
+    $count = 0;
+    $updated_macros = [];
+    foreach ($data_orig as $id => $macro) {
+
+      array_push($updated_macros, $macro);
+      
+      if (isset($macro->actions)) {
+        foreach ($macro->actions as $action) {
+          if (in_array($action->type, ['set-case-quick-reply', 'set-case-note'])) {
+            $updated_macros[] = [
+              'type' => $action->type,
+              'value' => $edited_replies[$id]
+            ];
+          }
+        }
+      }
+
+      $count++;
+    }
+
+    echo "\nUpdated text on " . $count . " macros...";
+    return $updated_macros;
   }
 
   /**
-   * Post a macro to Zendesk.
+   * Restructure a macro object for ZD import.
+   */
+  public function convertMacro(array $macro)
+  {
+    $zd_macro = new stdClass();
+    $zd_macro->title = $macro['title'];
+
+    $zd_macro->actions = []; // @todo see $this->actionMap
+
+    return json_encode($zd_macro);
+  }
+
+  /**
+   * Post a single macro to Zendesk.
    * 
    * @param object $macro
    * @return boolean
@@ -62,38 +100,29 @@ class ImportZendeskMacros
   }
 
   /**
-   * Restructure a macro object for ZD import.
-   */
-  public function convertMacro(array $macro)
-  {
-    $zd_macro = new stdClass();
-    $zd_macro->title = $macro['title'];
-
-    $zd_macro->actions = []; // @todo
-
-    return json_encode($zd_macro);
-  }
-
-  /**
-   * Return the ZD action equivalent to a 
-   * given Desk action type.
+   * Return the ZD action equivalent to a Desk action type.
    */
   static function actionMap(string $desk_action_type)
   {
     $map = [
-      'set-case-status' => 'status',
-      'set-case-quick-reply' => 'comment_value',
-      'set-case-agent' => NULL,
-      'set-case-group' => 'group_id', // Will need another map @todo
       'set-case-outbound-email-subject' => 'subject',
+      'set-case-quick-reply' => 'comment_value',
 
-      // These will also need comment_mode_is_public = FALSE @todo
+      // These will both need another map @todo
+      'set-case-status' => 'status',
+      'set-case-group' => 'group_id',
+
+      // These will also need comment_mode_is_public = FALSE in ZD @todo
       'set-case-description' => 'comment_value',
       'set-case-note' => 'comment_value',
 
-      'set-case-priority' => NULL,
+      // These are arrays in Desk but strings in ZD @todo
       'set-case-labels' => 'set_tags',
-      'append-case-labels' => 'current_tags'
+      'append-case-labels' => 'current_tags',
+
+      // Deprecating these.
+      'set-case-agent' => NULL,
+      'set-case-priority' => NULL
     ];
     return $map[$desk_action_type];
   }
