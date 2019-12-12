@@ -11,14 +11,14 @@ class ImportZendeskMacros
   {
     $this->filename = $filename;
 
-    // Fetch CSV and convert to JSON
     // Format for ZD import
-    $macros = $this->collectMacros();
+    $this->collectMacros($this->filename);
     echo "Collecting Macros for import...";
 
-    // Import to ZD via ZD API
-    $result = $this->createMacros($macros);
-    echo "\nImported " . $result . " Macros to Zendesk";
+    // Update text with edits from CSE @todo
+
+    // Import to ZD via ZD API @todo
+
   }
 
   /**
@@ -27,44 +27,68 @@ class ImportZendeskMacros
    * @return array
    *   Array of JSON objects, ready to import in ZD.
    */
-  public function collectMacros()
+  public function collectMacros($file)
   {
-    // Convert the CSV to an array.
-    $data = $this->readCSV();
+    // Retrieve JSON file.
+    $string = file_get_contents($file);
+    $data = json_decode($string);
 
-    // Assemble for ZD import.
-    $macros = [];
+    // Post to ZD with cURL.
+    $count = 0;
+    $types = [];
     foreach ($data as $macro) {
-
-      if ($macro['Status'] !== 'Done') {
-        continue;
+      foreach ($macro->actions as $action) {
+        $types[] = $action->type;
       }
-
-      $isPublic = $macro['Type'] == 'Public reply' ? TRUE : FALSE;
-
-      $macros[] = [
-        'title' => $macro['Title'],
-        'actions' => [
-          'comment_value' => $macro['Text'],
-          'comment_mode_is_public' => $isPublic,
-        ]
-      ];
     }
 
-    return $macros;
+    $unique_types = array_unique($types);
+    krumo($unique_types);
+
+      /*$converted = $this->convertMacro($macro);
+
+      $api = new ZendeskApi('/api/v2/macros');
+      $post = $api->postZendeskData($converted);
+
+      if ($post) {
+        $count++;
+      }
+
+    return "\nCreated " . $count . " macros in Zendesk!";*/
   }
 
   /**
-   * Post Macros to the Zendesk API.
-   * 
-   * @return int $count
-   *   Number of Macros created.
+   * Restructure a macro object for ZD import.
    */
-  public function createMacros()
+  public function convertMacro($macro)
   {
-    $api = new ZendeskApi();
-    $result = 0;
-    return $result;
+
+  }
+
+  /**
+   * Return the ZD action equivalent to a 
+   * given Desk action type.
+   */
+  static function actionMap($desk_action_type)
+  {
+
+    $map = [
+      'set-case-status' => 'status',
+      'set-case-quick-reply' => 'comment_value',
+      'set-case-agent' => NULL,
+      'set-case-group' => 'group_id', // Will need another map @todo
+      'set-case-outbound-email-subject' => 'subject',
+
+      // These will also need comment_mode_is_public = FALSE @todo
+      'set-case-description' => 'comment_value',
+      'set-case-note' => 'comment_value',
+
+      'set-case-priority' => NULL,
+      'set-case-labels' => 'set_tags',
+      'append-case-labels' => 'current_tags'
+    ];
+
+    return $map[$desk_action_type];
   }
 
 }
