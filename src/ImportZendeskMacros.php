@@ -8,7 +8,7 @@ use stdClass;
 class ImportZendeskMacros
 {
 
-  public function __construct($filename)
+  public function __construct(string $filename)
   {
     $this->filename = $filename;
 
@@ -30,7 +30,7 @@ class ImportZendeskMacros
    * @return array
    *   Array of JSON objects, ready to import in ZD.
    */
-  public function collectMacros($file)
+  public function collectMacros(string $file)
   {
     // Retrieve JSON file.
     $string = file_get_contents($file);
@@ -64,13 +64,13 @@ class ImportZendeskMacros
   /**
    * Restructure a macro object for ZD import.
    */
-  public function convertMacro($macro)
+  public function convertMacro(array $macro)
   {
     $zd_macro = new stdClass();
     $zd_macro->title = $macro['title'];
 
     $zd_macro->actions = []; // @todo
-    
+
     return json_encode($zd_macro);
   }
 
@@ -78,7 +78,7 @@ class ImportZendeskMacros
    * Return the ZD action equivalent to a 
    * given Desk action type.
    */
-  static function actionMap($desk_action_type)
+  static function actionMap(string $desk_action_type)
   {
     $map = [
       'set-case-status' => 'status',
