@@ -3,6 +3,7 @@
 namespace DeskMacrosToZendesk;
 
 use DeskMacrosToZendesk\ZendeskApi;
+use stdClass;
 
 class ImportZendeskMacros
 {
@@ -12,13 +13,15 @@ class ImportZendeskMacros
     $this->filename = $filename;
 
     // Format for ZD import
-    $this->collectMacros($this->filename);
-    echo "Collecting Macros for import...";
+    $macros = $this->collectMacros($this->filename);
+    echo "Collecting and formatting macros for import...";
 
     // Update text with edits from CSE @todo
+    // $edited = $this->editMacros($macros);
+    // echo "\nUpdating text...";
 
     // Import to ZD via ZD API @todo
-
+    // echo "\nPosting macros to Zendesk..."
   }
 
   /**
@@ -35,26 +38,27 @@ class ImportZendeskMacros
 
     // Post to ZD with cURL.
     $count = 0;
-    $types = [];
+    $converted = [];
     foreach ($data as $macro) {
-      foreach ($macro->actions as $action) {
-        $types[] = $action->type;
-      }
+      $converted[] = $this->convertMacro($macro);
     }
+    return "\nConverted " . $count . " macros for Zendesk";
+  }
 
-    $unique_types = array_unique($types);
-    krumo($unique_types);
-
-      /*$converted = $this->convertMacro($macro);
-
-      $api = new ZendeskApi('/api/v2/macros');
-      $post = $api->postZendeskData($converted);
-
-      if ($post) {
-        $count++;
-      }
-
-    return "\nCreated " . $count . " macros in Zendesk!";*/
+  /**
+   * Post a macro to Zendesk.
+   * 
+   * @param object $macro
+   * @return boolean
+   *   True for a successful post.
+   */
+  public function postMacro(StdClass $macro)
+  {
+    $api = new ZendeskApi('/api/v2/macros');
+    if ($api->postZendeskData($macro)) {
+      return true; 
+    }
+    return false;
   }
 
   /**
@@ -62,7 +66,12 @@ class ImportZendeskMacros
    */
   public function convertMacro($macro)
   {
+    $zd_macro = new stdClass();
+    $zd_macro->title = $macro['title'];
 
+    $zd_macro->actions = []; // @todo
+    
+    return json_encode($zd_macro);
   }
 
   /**
@@ -71,7 +80,6 @@ class ImportZendeskMacros
    */
   static function actionMap($desk_action_type)
   {
-
     $map = [
       'set-case-status' => 'status',
       'set-case-quick-reply' => 'comment_value',
@@ -87,7 +95,6 @@ class ImportZendeskMacros
       'set-case-labels' => 'set_tags',
       'append-case-labels' => 'current_tags'
     ];
-
     return $map[$desk_action_type];
   }
 
