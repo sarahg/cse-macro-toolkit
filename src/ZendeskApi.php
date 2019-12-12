@@ -13,9 +13,10 @@ namespace DeskMacrosToZendesk;
 class ZendeskApi
 {
 
-  public function __construct()
+  public function __construct($data)
   {
     $this->endpoint = '/api/v2/macros.json';
+    $this->data = $data;
   }
 
   /**
@@ -33,7 +34,7 @@ class ZendeskApi
       CURLOPT_TIMEOUT => 30,
       CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
       CURLOPT_CUSTOMREQUEST => 'POST',
-      CURLOPT_POSTFIELDS => $data,
+      CURLOPT_POSTFIELDS => $this->data,
       CURLOPT_HTTPHEADER => [
         'Authorization: Basic ' . base64_encode($_ENV['ZENDESK_EMAIL'] . ':' . $_ENV['ZENDESK_PASSWORD']),
         'Content-Type: application/json',
