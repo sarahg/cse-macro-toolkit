@@ -41,33 +41,26 @@ class ImportZendeskMacros
       $edits[$reply->id] = $reply->text;
     }
 
-    // Retrieve JSON of all original (non-deprecated) macros + actions
+    // Retrieve JSON of unedited, non-deprecated macros + actions.
     $string_orig = file_get_contents($file);
-    $data_orig = json_decode($string_orig);
+    $macros = json_decode($string_orig);
     
     // Merge edited replies into our main array of macros.
     $count = 0;
-    $updated_macros = [];
-    foreach ($data_orig as $id => $macro) {
-
-      array_push($updated_macros, $macro);
-      
+    foreach ($macros as $desk_id => $macro) {
       if (isset($macro->actions)) {
-        foreach ($macro->actions as $action) {
-          if (in_array($action->type, ['set-case-quick-reply', 'set-case-note'])) {
-            $updated_macros[] = [
-              'type' => $action->type,
-              'value' => $edited_replies[$id]
-            ];
+        foreach ($macro->actions as $key => $action) {
+          // If there's an edited version of this reply/note, pull it in.
+          if (isset($edits[$desk_id]) && in_array($action->type, ['set-case-quick-reply', 'set-case-note'])) {
+            $macros->{$desk_id}->actions[$key]->values = $edits[$desk_id];
+            $count++;
           }
         }
       }
-
-      $count++;
     }
 
     echo "\nUpdated text on " . $count . " macros...";
-    return $updated_macros;
+    return $macros;
   }
 
   /**
