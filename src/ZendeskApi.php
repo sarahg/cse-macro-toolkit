@@ -24,17 +24,17 @@ class ZendeskApi
    */
   public function postZendeskData($data)
   {
+
     // Call the Zendesk API.
     $curl = curl_init();
     curl_setopt_array($curl, array(
       CURLOPT_URL => 'https://'. $_ENV['ZENDESK_SUBDOMAIN'] .'.zendesk.com' . $this->endpoint,
       CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => '',
       CURLOPT_MAXREDIRS => 10,
       CURLOPT_TIMEOUT => 30,
       CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
       CURLOPT_CUSTOMREQUEST => 'POST',
-      CURLOPT_POSTFIELDS => $this->data,
+      CURLOPT_POSTFIELDS => $data,
       CURLOPT_HTTPHEADER => [
         'Authorization: Basic ' . base64_encode($_ENV['ZENDESK_EMAIL'] . ':' . $_ENV['ZENDESK_PASSWORD']),
         'Content-Type: application/json',
@@ -43,6 +43,7 @@ class ZendeskApi
 
     $response = curl_exec($curl);
     $err = curl_error($curl);
+
     curl_close($curl);
 
     if ($err) {
