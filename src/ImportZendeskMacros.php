@@ -21,7 +21,15 @@ class ImportZendeskMacros
     echo "\nFormatting macros...";
 
     // Post to ZD.
-    // echo "\nPosting macros to Zendesk..."
+    echo "\nPosting macros to Zendesk...";
+    $count = 0;
+    foreach ($formatted as $macro) {
+      if ($this->postMacro($macro)) {
+        $count++;
+      }
+    }
+    echo "\nPosted " . $count . " macros to Zendesk!";
+
   }
 
   /**
@@ -82,8 +90,8 @@ class ImportZendeskMacros
 
       $zd_macros[] = $zd_macro;
     }
-
-    //krumo($zd_macros);
+    
+    return $zd_macros;
   }
 
   /**
@@ -135,8 +143,9 @@ class ImportZendeskMacros
       'set-case-outbound-email-subject' => 'subject',
       'set-case-quick-reply' => 'comment_value',
       'set-case-note' => 'comment_value',
-      // Case Desc was an admin-only field in Desk and does not exist in ZD.
-      // Move those to private notes.
+
+      // Case Description was an admin-only field in Desk
+      // and does not exist in ZD. Move those to private notes.
       'set-case-description' => 'comment_value',
 
       // These are arrays in Desk but strings in ZD @todo
@@ -146,10 +155,6 @@ class ImportZendeskMacros
       // These will both need another map @todo
       //'set-case-status' => 'status',
       //'set-case-group' => 'group_id',
-
-      // Deprecating these.
-      //'set-case-agent' => NULL,
-      //'set-case-priority' => NULL
     ];
   }
 
