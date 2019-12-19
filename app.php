@@ -20,20 +20,18 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv::create(__DIR__);
 $dotenv->load();
 
-define('ZENDESK_IMPORT_FILE', 'exports/all-actions-1576098395.json');
-
 // Load our desired class based on the argument passed via CLI.
 $error = 'Invalid command. Please see https://github.com/sarahg/export_desk_macros#commands';
 if (isset($argv[1])) {
   switch ($argv[1]) {
-    case 'desk-export':
+    case 'export-replies':
       $macros = new ExportDeskMacros();
     break;
-    case 'extra-actions':
+    case 'export-all':
       $macros = new ExportExtraActions();
     break;
     case 'zendesk-import':
-      $macros = new ImportZendeskMacros(ZENDESK_IMPORT_FILE);
+      $macros = new ImportZendeskMacros($_ENV['ZENDESK_IMPORT_FILE']);
     break;
     default:
       echo $error;
