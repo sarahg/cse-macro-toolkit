@@ -13,12 +13,12 @@ class ImportZendeskMacros
     $this->filename = $filename;
 
     // Retrieve all macros and merge in our text updates.
+    echo "Updating macros for import...";
     $macros = $this->updateMacros($this->filename);
-    echo "Fetching and updating macros for import...";
 
     // Format objects for ZD.
+    echo "\nFormatting macros for Zendesk...";
     $formatted = $this->convertMacros($macros);
-    echo "\nFormatting macros...";
 
     // Post to ZD.
     echo "\nPosting macros to Zendesk...";
@@ -167,8 +167,9 @@ class ImportZendeskMacros
    */
   public function postMacro(StdClass $macro)
   {
+    $json = json_encode($macro);
     $api = new ZendeskApi('/api/v2/macros');
-    if ($api->postZendeskData($macro)) {
+    if ($api->postZendeskData($json)) {
       return true; 
     }
     return false;
