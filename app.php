@@ -25,14 +25,16 @@ $error = 'Invalid command. Please see https://github.com/sarahg/export_desk_macr
 if (isset($argv[1])) {
   switch ($argv[1]) {
     case 'export-replies':
-      $macros = new ExportDeskMacros();
+      new ExportDeskMacros();
     break;
     case 'export-all':
-      $macros = new ExportExtraActions();
+      new ExportExtraActions();
     break;
     case 'zendesk-import':
-      $macros = new ImportZendeskMacros($_ENV['ZENDESK_IMPORT_FILE']);
+      new ImportZendeskMacros($_ENV['ZENDESK_IMPORT_FILE']);
     break;
+    case 'delete-all':
+      new DeleteZendeskMacros($ids);
     default:
       echo $error;
   }
