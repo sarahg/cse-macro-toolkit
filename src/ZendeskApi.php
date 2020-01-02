@@ -2,21 +2,24 @@
 
 namespace DeskMacrosToZendesk;
 
+use FFI\Exception;
+
 /**
  * Fetch data from the Zendesk API with cURL.
  * 
  * @throws Exception If cURL returns an error
+ * 
  * @param string $endpoint API endpoint
  *   See https://developer.zendesk.com/rest_api/docs/support/macros#create-macro
+ * 
  * @return array
  */
 class ZendeskApi
 {
 
-  public function __construct($data)
+  public function __construct($endpoint)
   {
-    $this->endpoint = '/api/v2/macros.json';
-    $this->data = $data;
+    $this->endpoint = $endpoint;
   }
 
   /**
