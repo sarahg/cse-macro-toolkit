@@ -111,7 +111,16 @@ class ImportZendeskMacros
       }
       $zd_action = new StdClass();
       $zd_action->field = $action_map[$action->type];
-      $zd_action->value = $action->values;
+
+      // Labels were arrays in Desk, but need to be strings in ZD.
+      if (in_array($action->type, ['append-case-labels', 'set-case-labels'])) {
+        $zd_action->value = implode(', ', $action->values);
+      }
+      // Everything else is cool as-is.
+      else {
+        $zd_action->value = $action->values;
+      }
+
       $zd_actions[] = $zd_action;
 
       // If we added a comment_value action, set visibility.
@@ -148,9 +157,8 @@ class ImportZendeskMacros
       // and does not exist in ZD. Move those to private notes.
       'set-case-description' => 'comment_value',
 
-      // These are arrays in Desk but strings in ZD @todo
-      //'set-case-labels' => 'set_tags',
-      //'append-case-labels' => 'current_tags',
+      'set-case-labels' => 'set_tags',
+      'append-case-labels' => 'current_tags',
 
       // These will both need another map @todo
       //'set-case-status' => 'status',
